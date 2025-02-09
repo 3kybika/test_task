@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    volumes:
+      - ./app:/usr/src/app
+    ports:
+      - 8004:8000
+    environment:
+      - DATABASE_URL=mongodb://db:27017/mydatabase
+    depends_on:
+      - db
+
+
+  db:
+    image: mongo:latest
+    ports:
+      - 27017:27017
+    volumes:
+      - mongodb_data:/data/db
+
+  mysql:
+    image: mysql:5.7
+    restart: always
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+    networks:
+      - tinode-net
+
+  tinode:
+    image: tinode/tinode-mysql:latest
+    restart: on-failure
+    ports:
+      - "6060:6060"
+      - "16060:16060"
+    networks:
+      - tinode-net
+    depends_on:
+      - mysql
+
+networks:
+  tinode-net:
+
+volumes:
+  mongodb_data:

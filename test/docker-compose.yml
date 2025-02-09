@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:5.7
+    restart: always
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+    networks:
+      - tinode-net
+
+  tinode:
+    image: tinode/tinode-mysql:latest
+    restart: on-failure
+    ports:
+      - "6060:6060"
+      - "16060:16060"
+    networks:
+      - tinode-net
+    depends_on:
+      - mysql
+
+networks:
+  tinode-net:

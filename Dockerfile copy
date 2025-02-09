@@ -1,0 +1,39 @@
+FROM python:3.10-slim-bullseye
+
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+
+WORKDIR /usr/src/app
+
+COPY pyproject.toml poetry.lock ./
+COPY gunicorn_conf.py /gunicorn_conf.py
+COPY Makefile Makefile ./
+
+
+ENV FASTAPI_ENV=development
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV POETRY_HOME="/opt/poetry"
+ENV POETRY_VERSION="1.7.0"
+ENV PYTHON?=python3.10
+ENV VENV_PATH="/opt/pysetup/.venv"
+
+ENV PATH="$POETRY_HOME/bin:$VENV_PATH/bin:$PATH"
+
+# poetry
+RUN python3 -m pip install poetry==1.7.0 poetry-core==1.8.1 poetry-dynamic-versioning==1.2.0 poetry-plugin-export==1.6.0 
+
+RUN poetry install --no-dev
+
+RUN groupadd -g 1500 poetry && \
+    useradd -m -u 1500 -g poetry poetry
+
+COPY --chown=poetry:poetry ./app /app
+USER poetry
+
+COPY . .
+
+CMD ["gunicorn", "--worker-class uvicorn.workers.UvicornWorker", "--config /gunicorn_conf.py", "main:app", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
