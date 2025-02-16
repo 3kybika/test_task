@@ -20,12 +20,13 @@ fastapi-csrf-protect = "^0.3.3"
 passlib = "^1.7.4"
 pyjwt = "^2.8.0"
 gunicorn = "^23.0.0"
-grpcio = "^1.70.0"
-grpcio-tools = "^1.70.0"
-tinode-grpc = "^0.22.3"
 pymongo = "^4.11"
 ruff = "^0.9.5"
 black = "^25.1.0"
+protobuf = "^5.29.3"
+tinode-grpc = "^0.22.3"
+grpcio = "^1.70.0"
+grpclib = "^0.4.7"
 
 
 [build-system]

@@ -13,6 +13,7 @@ APP_NAME="tn_test_task"
 APP_VERSION="2.0.0b2" #?!
 LIB_VERSION = pkg_resources.get_distribution("tinode_grpc").version
 GRPC_VERSION = pkg_resources.get_distribution("grpcio").version
+#TINODE_HOST = "tinode:16060"
 TINODE_HOST = "localhost:16060"
 
 def parse_cred(cred):

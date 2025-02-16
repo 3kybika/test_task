@@ -4,7 +4,7 @@ from pymongo import MongoClient
 from tinode_grpc import pb
 import random
 import pkg_resources
-from app.service.grpc_service import GrpcService
+from app.service import tinode_service
 from app.service.utils import get_id
 
 
@@ -39,15 +39,15 @@ class AuthService:
     def __init__(
         self,
         mongo_client: MongoClient = Depends(get_session),
-        grpc_service: GrpcService = Depends(GrpcService),
+        #grpc_service: GrpcService = Depends(GrpcService),
     ):
         self.session = mongo_client
         self.mongo_db = mongo_client.db
-        self.grpc_service = grpc_service
+        #self.grpc_service = grpc_service
 
     @staticmethod
     def make_secret(email, pasword):
-        return ((str(email) + ":" + str(pasword)).encode("utf-8"),)
+        return (str(email) + ":" + str(pasword)).encode("utf-8")
 
     @staticmethod
     def parse_cred(cred):
@@ -67,20 +67,52 @@ class AuthService:
         return result
 
     async def register_new_user(self, email, password):
+        msg = [
+            tinode_service.register_msg(
+                id="asd",
+                email=email,
+                secret = self.make_secret(email, password),
+                scheme = "basic",
+                login=False
+            )
+        ]
 
-        request = pb.ClientLogin(
-            id=str(get_id()),
-            scheme="basic",
-            secret=self.make_secret(email, password),
-            cred=self.parse_cred("email:{}".format(email)),
-        )
+        failed, responses = tinode_service.message_loop(msg)
+        logger.debug(responses)
+        if failed:
+            raise UserExistsException() # ToDo
+        logger.debug(responses)
+        if len(responses) == 0:
+            raise UserExistsException() # ToDo
+        
+        if  responses[0].code != 201:
+            #code: 422 "policy violation"
+            raise UserExistsException(responses[0])
 
-        response = await self.grpc_service.send_msg(request, await_res=True)
-        logger.debug(response)
-        if response.code == 201:
-            return
+        return responses
 
-        raise UserExistsException()
+
+    async def login(self, email, password):
+        msg = [
+            tinode_service.login_msg(
+                id="123",
+                email=email,
+                secret = self.make_secret(email, password),
+                scheme = "basic"
+            )
+        ]
+        failed, responses = tinode_service.message_loop(msg)
+        if failed:
+            raise UserExistsException() # ToDo
+        logger.debug(responses)
+        if len(responses) == 0:
+            raise UserExistsException() # ToDo
+        
+        if  responses[0].code != 201:
+            raise UserExistsException(responses[0])
+
+        return responses
+
 
     """
     ToDo:  didn't have time to use it

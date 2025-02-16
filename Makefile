@@ -18,7 +18,6 @@ help:
 
 
 poetry-install:
-	#$(PYTHON) -m ensurepip
 	$(PYTHON) -m pip install -U --user poetry==1.7.0 poetry-core==1.8.1 poetry-dynamic-versioning==1.2.0 poetry-plugin-export==1.6.0
 
 

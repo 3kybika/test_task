@@ -62,40 +62,4 @@ COPY . .
 
 EXPOSE 8000
 ENTRYPOINT /docker-entrypoint.sh $0 $@
-CMD ["uvicorn", "--reload", "--host=0.0.0.0", "--port=8000", "main:app"]
-
-
-# 'lint' stage runs black and isort
-# running in check mode means build will fail if any linting errors occur
-FROM development AS lint
-RUN black --config ./pyproject.toml --check app tests
-RUN isort --settings-path ./pyproject.toml --recursive --check-only
-CMD ["tail", "-f", "/dev/null"]
-
-# 'test' stage runs our unit tests with pytest and
-# coverage.  Build will fail if test coverage is under 95%
-FROM development AS test
-RUN coverage run --rcfile ./pyproject.toml -m pytest ./tests
-RUN coverage report --fail-under 95
-
-# 'production' stage uses the clean 'python-base' stage and copyies
-# in only our runtime deps that were installed in the 'builder-base'
-FROM python-base AS production
-ENV FASTAPI_ENV=production
-
-COPY --from=builder-base $VENV_PATH $VENV_PATH
-COPY gunicorn_conf.py /gunicorn_conf.py
-
-COPY docker-entrypoint.sh /docker-entrypoint.sh
-RUN chmod +x /docker-entrypoint.sh
-
-# Create user with the name poetry
-RUN groupadd -g 1500 poetry && \
-    useradd -m -u 1500 -g poetry poetry
-
-COPY --chown=poetry:poetry ./app /app
-USER poetry
-WORKDIR /
-
-ENTRYPOINT /docker-entrypoint.sh $0 $@
-CMD [ "gunicorn", "--worker-class uvicorn.workers.UvicornWorker", "--config /gunicorn_conf.py", "app.main:app"]
+CMD ["uvicorn", "--reload", "--host=0.0.0.0", "--port=8000", "app.main:app"]

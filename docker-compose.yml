@@ -4,14 +4,17 @@ services:
   web:
     build: .
     volumes:
-      - ./app:/usr/src/app
+      - ./app:/app/app
     ports:
       - 8004:8000
     environment:
       - DATABASE_URL=mongodb://db:27017/mydatabase
     depends_on:
       - db
-
+      - tinode
+    restart: on-failure
+    networks:
+      - tinode-net
 
   db:
     image: mongo:latest
@@ -30,7 +33,7 @@ services:
 
   tinode:
     image: tinode/tinode-mysql:latest
-    restart: on-failure
+    restart: always
     ports:
       - "6060:6060"
       - "16060:16060"
